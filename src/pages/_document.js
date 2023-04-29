@@ -28,6 +28,7 @@ export default function Document() {
               integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
               crossOrigin="anonymous"
           ></script>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap-icons.min.css" rel="stylesheet"/>
       </Head>
       <body>
         <Main />

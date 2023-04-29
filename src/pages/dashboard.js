@@ -21,12 +21,25 @@ export default function Dashboard() {
         newName: '', bid: '', ask: '',
     });
     //it to show in selected line 2
-    const [option, setOption] =useState([]);
+    const [option, setOption] = useState([]);
     const [selectedOption, setSelectedOption] = useState("");
     //it uses in updateData only
     const [selected, setSelected] = useState("");
     const token = Cookies.get('jwt_token');
-    const decodedToken = jwt_decode(token);
+
+    const [decodedToken, setDecodedToken] =useState({
+        admin: 0,
+        email: "",
+        name: "",
+    });
+    async function decodeToken() {
+        try {
+            setDecodedToken(await jwt_decode(token));
+        } catch (e) {
+            console.log("Error decoding");
+        }
+    }
+
     const updateData = async () => {
         const response = await axios.get('/price/all');
         const uniqueNames = [...new Set(response.data.map(obj =>
@@ -34,6 +47,7 @@ export default function Dashboard() {
                 obj.user_name_update : ''))];
         setOption(uniqueNames);
         setData(response.data);
+        decodeToken();
     };
 
     const handleLogoutClick = () => {
@@ -161,6 +175,12 @@ export default function Dashboard() {
         setSelectedFile(event.target.files[0]);
     };
 
+    const [showInvalidFileModal, setShowInvalidFileModal] = useState(false);
+
+    const handleInvalidFileCancel = () => {
+        setShowInvalidFileModal(false);
+    };
+
     const handleUpdateFile = async (file) => {
         if (!file) {
             console.log("No file selected");
@@ -173,10 +193,27 @@ export default function Dashboard() {
         const formData = new FormData();
         formData.append("time", currentTime);
         formData.append("name", decodedToken.name);
-        formData.append("file", file);
+        // Check the file extension to determine the appropriate key
+        const fileExtension = file.name.split('.').pop();
+
+        if (fileExtension === 'csv') {
+            formData.append("type", "csv");
+            formData.append("csvFile", file);
+        } else if (fileExtension === 'txt') {
+            formData.append("type", "text");
+            formData.append("file", file);
+        } else {
+            // Display a pop-up modal if the file is not a CSV or TXT file
+            setShowInvalidFileModal(true);
+            return;
+        }
 
         try {
-            const response = await axios.post("/user/post/all", formData);
+            const response = await axios.post("/user/post/all", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
             console.log("File uploaded successfully");
             console.log(response);
             updateData();
@@ -188,119 +225,83 @@ export default function Dashboard() {
 
     return (
         <div className="container">
-        {/*header*/}
-        <div>
-            <h1 className="text-center mb-4">Dashboard</h1>
-            <div className="mb-3">
-                <p className="mr-2">Welcome to goldPrice page, {decodedToken.name} !</p>
-                <button
-                    type="button"
-                    className="btn btn-secondary float-right"
-                    onClick={handleLogoutClick}
-                >
-                    Logout
-                </button>
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setShowAddModal(true)}
-                >
-                    Add New Data
-                </button>
-                <button
-                    type="button"
-                    className="btn btn-success ml-2"
-                    onClick={handleUpdateGoldPriceClick}
-                >
-                    Update Gold price
-                </button>
-                <div className="form-group">
-                    <label htmlFor="fileInput">Select File:</label>
-                    <div className="custom-file">
-                        <input type="file" className="custom-file-input" id="fileInput" onChange={handleFileChange}/>
+            {/*header*/}
+            <div>
+                <h1 className="text-center mb-4">Dashboard</h1>
+                <div className="mb-3">
+                    <p className="mr-2">Welcome to goldPrice page, {decodedToken.name} !</p>
+                    <button
+                        type="button"
+                        className="btn btn-secondary float-right"
+                        onClick={handleLogoutClick}
+                    >
+                        Logout
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setShowAddModal(true)}
+                    >
+                        Add New Data
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-success ml-2"
+                        onClick={handleUpdateGoldPriceClick}
+                    >
+                        Update Gold price
+                    </button>
+                    <div className="form-group">
+                        <label htmlFor="fileInput">Select File:</label>
+                        <div className="custom-file">
+                            <input type="file" className="custom-file-input" id="fileInput"
+                                   onChange={handleFileChange}/>
+                        </div>
                     </div>
+                    <button type="button" className="btn btn-primary" onClick={() => handleUpdateFile(selectedFile)}>
+                        Update File
+                    </button>
+                    <select
+                        className="form-select"
+                        value={selected}
+                        onChange={(e) => setSelected(e.target.value)}
+                    >
+                        <option value="">Select type option</option>
+                        <option value="time">Time</option>
+                        <option value="name">Name</option>
+                        <option value="user_name_update">Username Update</option>
+                    </select>
+                    <select className="form-select"
+                            value={selectedOption}
+                            onChange={(e) => setSelectedOption(e.target.value)}
+                    >
+                        <option value="">Select an option</option>
+                        {option.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
                 </div>
-                <button type="button" className="btn btn-primary" onClick={() => handleUpdateFile(selectedFile)}>
-                    Update File
-                </button>
-                <select
-                    className="form-select"
-                    value={selected}
-                    onChange={(e) => setSelected(e.target.value)}
-                >
-                    <option value="">Select type option</option>
-                    <option value="time">Time</option>
-                    <option value="name">Name</option>
-                    <option value="user_name_update">Username Update</option>
-                </select>
-                <select className="form-select"
-                        value={selectedOption}
-                        onChange={(e) => setSelectedOption(e.target.value)}
-                >
-                    <option value="">Select an option</option>
-                    {option.map((option) => (
-                        <option key={option} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
             </div>
-        </div>
 
-        {/*table to show all data*/}
-        <table className="table">
-            <thead>
-            <tr>
-                <th>Time</th>
-                <th>Name</th>
-                <th>Purchase Price</th>
-                <th>Sell-off Price</th>
-                <th>Username Update</th>
-            </tr>
-            </thead>
-            <tbody>
-            {selectedOption === '' ? (
-                // when not select
-                data.map((obj, index) => (
-                    <tr key={index}>
-                        <td>{obj.time}</td>
-                        <td>{obj.name}</td>
-                        <td>{obj.purchase_price}</td>
-                        <td>{obj.sell_off_price}</td>
-                        <td>
-                            <div className="d-flex align-items-center">
-                                {obj.user_name_update}
-                                {obj.user_name_update === decodedToken.name && (
-                                    <>
-                                        <button
-                                            className="btn btn-sm btn-primary ml-2 mr-2"
-                                            onClick={() => handleEditClick(obj)}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-danger"
-                                            onClick={() => handleDeleteClick(obj.name)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                ))
-            ) : (
-                // when is select something
-                data
-                    .filter((obj) => (
-                        selected === "time" ? obj.time :
-                            selected === "name" ? obj.name :
-                                selected === "user_name_update" ?
-                                    obj.user_name_update : '') === selectedOption)
-                    .map((obj, index) => (
+            {/*table to show all data*/}
+            <table className="table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Name</th>
+                    <th>Purchase Price</th>
+                    <th>Sell-off Price</th>
+                    <th>Username Update</th>
+                </tr>
+                </thead>
+                <tbody>
+                {selectedOption === '' ? (
+                    // when not select
+                    data.map((obj, index) => (
                         <tr key={index}>
-                            <td>{obj.time}</td>
+                            <td>{obj.time.split(':').slice(0, 2).join(':')}</td>
                             <td>{obj.name}</td>
                             <td>{obj.purchase_price}</td>
                             <td>{obj.sell_off_price}</td>
@@ -327,139 +328,190 @@ export default function Dashboard() {
                             </td>
                         </tr>
                     ))
-            )}
-            </tbody>
-        </table>
+                ) : (
+                    // when is select something
+                    data
+                        .filter((obj) => (
+                            selected === "time" ? obj.time :
+                                selected === "name" ? obj.name :
+                                    selected === "user_name_update" ?
+                                        obj.user_name_update : '') === selectedOption)
+                        .map((obj, index) => (
+                            <tr key={index}>
+                                <td>{obj.time}</td>
+                                <td>{obj.name}</td>
+                                <td>{obj.purchase_price}</td>
+                                <td>{obj.sell_off_price}</td>
+                                <td>
+                                    <div className="d-flex align-items-center">
+                                        {obj.user_name_update}
+                                        {obj.user_name_update === decodedToken.name && (
+                                            <>
+                                                <button
+                                                    className="btn btn-sm btn-primary ml-2 mr-2"
+                                                    onClick={() => handleEditClick(obj)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => handleDeleteClick(obj.name)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                )}
+                </tbody>
+            </table>
 
-        {/*form to add new data*/}
-        <Modal
-            show={showAddModal}
-            onHide={() => setShowAddModal(false)}
-        >
-            <Modal.Header closeButton>
-                <Modal.Title>Add New Data</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <form onSubmit={handleFormSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="nameInput">Name</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="nameInput"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleFormChange}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="purchasePriceInput">Purchase Price</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="purchasePriceInput"
-                            name="bid"
-                            value={formData.bid}
-                            onChange={handleFormChange}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="sellOffPriceInput">Sell-off Price</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="sellOffPriceInput"
-                            name="ask"
-                            value={formData.ask}
-                            onChange={handleFormChange}
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                    >
-                        Submit
-                    </button>
-                </form>
-            </Modal.Body>
-        </Modal>
+            {/*form to add new data*/}
+            <Modal
+                show={showAddModal}
+                onHide={() => setShowAddModal(false)}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Add New Data</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <form onSubmit={handleFormSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="nameInput">Name</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="nameInput"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleFormChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="purchasePriceInput">Purchase Price</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                id="purchasePriceInput"
+                                name="bid"
+                                value={formData.bid}
+                                onChange={handleFormChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="sellOffPriceInput">Sell-off Price</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                id="sellOffPriceInput"
+                                name="ask"
+                                value={formData.ask}
+                                onChange={handleFormChange}
+                                required
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                        >
+                            Submit
+                        </button>
+                    </form>
+                </Modal.Body>
+            </Modal>
 
-        {/*form to edit data*/}
-        <Modal
-            show={showEditModal}
-            onHide={() => setShowEditModal(false)}
-        >
-            <Modal.Header closeButton>
-                <Modal.Title>Edit Data</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <form onSubmit={handleFormSubmitEdit}>
-                    <div className="form-group">
-                        <label htmlFor="nameInput">Name</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="nameInput"
-                            name="newName"
-                            value={formEditData.newName}
-                            onChange={handleFormEditChange}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="purchasePriceInput">Purchase Price</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="purchasePriceInput"
-                            name="bid"
-                            value={formEditData.bid}
-                            onChange={handleFormEditChange}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="sellOffPriceInput">Sell-off Price</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="sellOffPriceInput"
-                            name="ask"
-                            value={formEditData.ask}
-                            onChange={handleFormEditChange}
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                    >
-                        Submit
-                    </button>
-                </form>
-            </Modal.Body>
-        </Modal>
+            {/*form to edit data*/}
+            <Modal
+                show={showEditModal}
+                onHide={() => setShowEditModal(false)}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Edit Data</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <form onSubmit={handleFormSubmitEdit}>
+                        <div className="form-group">
+                            <label htmlFor="nameInput">Name</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="nameInput"
+                                name="newName"
+                                value={formEditData.newName}
+                                onChange={handleFormEditChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="purchasePriceInput">Purchase Price</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                id="purchasePriceInput"
+                                name="bid"
+                                value={formEditData.bid}
+                                onChange={handleFormEditChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="sellOffPriceInput">Sell-off Price</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                id="sellOffPriceInput"
+                                name="ask"
+                                value={formEditData.ask}
+                                onChange={handleFormEditChange}
+                                required
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                        >
+                            Submit
+                        </button>
+                    </form>
+                </Modal.Body>
+            </Modal>
 
-        {/* Modal for delete confirmation */}
-        <Modal
-            show={showDeleteModal}
-            onHide={handleDeleteCancel}
-        >
-            <Modal.Header closeButton>
-                <Modal.Title>Delete Confirmation</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>Are you sure you want to delete this data?</Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={handleDeleteCancel}>
-                    No
-                </Button>
-                <Button variant="danger" onClick={handleDeleteConfirm}>
-                    Yes
-                </Button>
-            </Modal.Footer>
-        </Modal>
-    </div>);
+            {/* Modal for delete confirmation */}
+            <Modal
+                show={showDeleteModal}
+                onHide={handleDeleteCancel}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Delete Confirmation</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>Are you sure you want to delete this data?</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleDeleteCancel}>
+                        No
+                    </Button>
+                    <Button variant="danger" onClick={handleDeleteConfirm}>
+                        Yes
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Modal for invalid file type */}
+            <Modal show={showInvalidFileModal} onHide={handleInvalidFileCancel}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Invalid File Type</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>The file you selected is not a CSV or text file.</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="primary" onClick={handleInvalidFileCancel}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        </div>
+    );
 };
