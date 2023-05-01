@@ -176,14 +176,19 @@ export default function Dashboard() {
     };
 
     const [showInvalidFileModal, setShowInvalidFileModal] = useState(false);
+    const [showNotHaveFileModal, setShowNotHaveFileModal] = useState(false);
 
     const handleInvalidFileCancel = () => {
         setShowInvalidFileModal(false);
     };
 
+    const handleNotHaveFileCancel = () => {
+        setShowNotHaveFileModal(false);
+    };
+
     const handleUpdateFile = async (file) => {
         if (!file) {
-            console.log("No file selected");
+            setShowNotHaveFileModal(true);
             return;
         }
 
@@ -522,6 +527,22 @@ export default function Dashboard() {
                 <Modal.Body>The file you selected is not a CSV or text file.</Modal.Body>
                 <Modal.Footer>
                     <Button variant="primary" onClick={handleInvalidFileCancel}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Modal for nto have file */}
+            <Modal
+                show={showNotHaveFileModal}
+                onHide={handleNotHaveFileCancel}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Invalid File Type</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>No file selected.</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="primary" onClick={handleNotHaveFileCancel}>
                         Close
                     </Button>
                 </Modal.Footer>
