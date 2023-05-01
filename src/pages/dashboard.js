@@ -254,12 +254,20 @@ export default function Dashboard() {
                     <div className="form-group">
                         <label htmlFor="fileInput">Select File:</label>
                         <div className="custom-file">
-                            <input type="file" className="custom-file-input" id="fileInput"
-                                   onChange={handleFileChange}/>
+                            <input
+                                type="file"
+                                className="custom-file-input"
+                                id="fileInput"
+                                onChange={handleFileChange}
+                            />
                         </div>
                     </div>
-                    <button type="button" className="btn btn-primary" onClick={() => handleUpdateFile(selectedFile)}>
-                        Update File
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => handleUpdateFile(selectedFile)
+                    }>
+                        Update File (เฉพาะ File ชนิด textFile (.txt) หรือ csvFile (.csv) เท่านั้น
                     </button>
                     <select
                         className="form-select"
@@ -277,7 +285,10 @@ export default function Dashboard() {
                     >
                         <option value="">Select an option</option>
                         {option.map((option) => (
-                            <option key={option} value={option}>
+                            <option
+                                key={option}
+                                value={option}
+                            >
                                 {option}
                             </option>
                         ))}
@@ -501,7 +512,10 @@ export default function Dashboard() {
             </Modal>
 
             {/* Modal for invalid file type */}
-            <Modal show={showInvalidFileModal} onHide={handleInvalidFileCancel}>
+            <Modal
+                show={showInvalidFileModal}
+                onHide={handleInvalidFileCancel}
+            >
                 <Modal.Header closeButton>
                     <Modal.Title>Invalid File Type</Modal.Title>
                 </Modal.Header>
