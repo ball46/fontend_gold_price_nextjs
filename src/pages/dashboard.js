@@ -166,6 +166,7 @@ export default function Dashboard() {
 
     const handleUpdateGoldPriceClick = () => {
         axios.post('/inputData');
+        setShowUpdateModal(true);
         updateData();
     };
 
@@ -177,6 +178,11 @@ export default function Dashboard() {
 
     const [showInvalidFileModal, setShowInvalidFileModal] = useState(false);
     const [showNotHaveFileModal, setShowNotHaveFileModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+    const handleUpdateCancel = () => {
+        setShowUpdateModal(false);
+    };
 
     const handleInvalidFileCancel = () => {
         setShowInvalidFileModal(false);
@@ -538,11 +544,26 @@ export default function Dashboard() {
                 onHide={handleNotHaveFileCancel}
             >
                 <Modal.Header closeButton>
-                    <Modal.Title>Invalid File Type</Modal.Title>
+                    <Modal.Title>Invalid File</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>No file selected.</Modal.Body>
                 <Modal.Footer>
                     <Button variant="primary" onClick={handleNotHaveFileCancel}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal
+                show={showUpdateModal}
+                onHide={handleUpdateCancel}
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Update gold price</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>Price is updated.</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="primary" onClick={handleUpdateCancel}>
                         Close
                     </Button>
                 </Modal.Footer>
